@@ -98,6 +98,12 @@ export default function App() {
         const noteId = await createNote(user.uid, topic, NoteSize.MEDIUM);
         if (noteId) {
           setActiveNoteId(noteId);
+          
+          const apiKey = process.env.GEMINI_API_KEY;
+          if (!apiKey) {
+            throw new Error("API_KEY_MISSING");
+          }
+
           const content = await generateConspect(topic, NoteSize.MEDIUM, language, useSearch);
           if (content) {
             await updateNote(noteId, { content, title: topic });
@@ -105,9 +111,13 @@ export default function App() {
             throw new Error("Empty content received from AI");
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Quick generation failed:", error);
-        alert("Ошибка быстрой генерации! Проверьте API ключ.");
+        if (error.message === "API_KEY_MISSING") {
+          alert("API ключ не найден! Добавьте GEMINI_API_KEY.");
+        } else {
+          alert(`Ошибка быстрой генерации: ${error.message}`);
+        }
       } finally {
         setIsQuickGenerating(false);
       }
@@ -164,6 +174,13 @@ export default function App() {
       noteId = await createNote(user.uid, genTopic, genSize);
       if (noteId) {
         setActiveNoteId(noteId); // Switch immediately so user sees something is happening
+        
+        // Final sanity check before calling AI
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) {
+          throw new Error("API_KEY_MISSING");
+        }
+
         const content = await generateConspect(genTopic, genSize, language, useSearch);
         if (content) {
           await updateNote(noteId, { content, title: genTopic });
@@ -172,9 +189,13 @@ export default function App() {
         }
         setGenTopic('');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Generation failed:", error);
-      alert("Ошибка при генерации! Проверьте настройки API ключа.");
+      if (error.message === "API_KEY_MISSING") {
+        alert("API ключ не найден! Если вы на Vercel, добавьте GEMINI_API_KEY в настройки Environment Variables.");
+      } else {
+        alert(`Ошибка при генерации: ${error.message || 'Неизвестная ошибка'}`);
+      }
     } finally {
       setIsGenerating(false);
     }

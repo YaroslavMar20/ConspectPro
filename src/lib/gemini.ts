@@ -49,13 +49,17 @@ export async function generateConspect(topic: string, size: NoteSize, language: 
       }
     });
     
-    if (!response.text) {
-      throw new Error("No text returned from Gemini");
+    if (!response || !response.text) {
+      console.error("Gemini Response structure:", response);
+      throw new Error("No text returned from Gemini. Model may be busy or restricted in your region.");
     }
     
     return response.text;
-  } catch (error) {
-    console.error("Gemini generation error:", error);
+  } catch (error: any) {
+    console.error("Gemini generation error details:", error);
+    if (error?.message?.includes("API_KEY_INVALID")) {
+      throw new Error("Invalid Gemini API Key. Please verify your environment variables.");
+    }
     throw error;
   }
 }
