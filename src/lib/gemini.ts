@@ -19,7 +19,7 @@ export async function generateConspect(topic: string, size: NoteSize, language: 
   const ai = getAI();
   if (!ai) throw new Error("API_KEY_MISSING");
 
-  const model = "gemini-1.5-flash";
+  const model = "gemini-2.0-flash";
   const langName = language === 'ru' ? 'Русский' : language === 'en' ? 'English' : language === 'fr' ? 'Français' : '中文';
   
   const sizeDesc = {
@@ -68,7 +68,7 @@ export async function rephraseSelection(text: string, instruction: string) {
   const ai = getAI();
   if (!ai) throw new Error("API_KEY_MISSING");
 
-  const model = "gemini-1.5-flash";
+  const model = "gemini-2.0-flash";
   const prompt = `Перефразируй или измени следующий текст согласно инструкции.
   Инструкция: ${instruction}
   Текст: "${text}"
@@ -90,7 +90,7 @@ export async function checkPlagiarism(content: string) {
   const ai = getAI();
   if (!ai) throw new Error("API_KEY_MISSING");
 
-  const model = "gemini-1.5-flash";
+  const model = "gemini-2.0-flash";
   const prompt = `Проверь следующий текст на уникальность и антиплагиат. 
   Оцени уровень оригинальности в процентах (0-100) и дай краткий комментарий, если текст кажется заимствованным.
   Текст: "${content.substring(0, 5000)}" 
@@ -104,9 +104,15 @@ export async function checkPlagiarism(content: string) {
         responseMimeType: "application/json"
       }
     });
+    
+    if (!response || !response.text) {
+      throw new Error("No data returned from Gemini");
+    }
+    
     return JSON.parse(response.text || "{}");
-  } catch (error) {
+  } catch (error: any) {
     console.error("Gemini plagiarism check error:", error);
+    // Handle 404 or 429 specifically if needed
     throw error;
   }
 }

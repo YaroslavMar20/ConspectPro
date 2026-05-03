@@ -118,6 +118,8 @@ export default function App() {
           alert("API ключ не найден!");
         } else if (errorMsg.includes("429") || errorMsg.includes("RESOURCE_EXHAUSTED")) {
           alert("Квота Gemini исчерпана. Подождите минуту или попробуйте завтра.");
+        } else if (errorMsg.includes("404") || errorMsg.includes("NOT_FOUND")) {
+          alert("Модель Gemini не найдена (404). Проверьте настройки API ключа в Settings -> Environment Variables.");
         } else {
           alert(`Ошибка быстрой генерации: ${errorMsg}`);
         }
@@ -199,6 +201,8 @@ export default function App() {
         alert("API ключ не найден! Проверьте настройки окружения.");
       } else if (errorMsg.includes("429") || errorMsg.includes("RESOURCE_EXHAUSTED")) {
         alert("Превышена квота запросов! Пожалуйста, подождите 1 минуту или попробуйте завтра (на бесплатном тарифе Gemini есть ограничения).");
+      } else if (errorMsg.includes("404") || errorMsg.includes("NOT_FOUND")) {
+        alert("Модель Gemini не найдена (404). Проверьте настройки API ключа в Settings -> Environment Variables.");
       } else {
         alert(`Ошибка при генерации: ${errorMsg || 'Неизвестная ошибка'}`);
       }
@@ -219,6 +223,15 @@ export default function App() {
   );
 
   const activeNote = notes.find(n => n.id === activeNoteId);
+
+  const handleSignIn = async () => {
+    try {
+      await signInWithGoogle();
+    } catch (error: any) {
+      console.error("Sign-in error:", error);
+      alert(`Ошибка входа: ${error.message || "Попробуйте разрешить всплывающие окна или проверьте настройки Firebase."}`);
+    }
+  };
 
   if (loading) {
     return (
@@ -243,7 +256,7 @@ export default function App() {
           <p className="text-slate-600 mb-8">{t.tagline}</p>
           
           <button 
-            onClick={signInWithGoogle}
+            onClick={handleSignIn}
             className="w-full flex items-center justify-center gap-3 py-3 px-4 bg-white border border-slate-300 rounded-xl font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-sm hover:shadow-md"
           >
             <img src="https://www.google.com/favicon.ico" className="w-4 h-4" alt="Google" />
