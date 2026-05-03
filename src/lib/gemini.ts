@@ -17,9 +17,9 @@ function getAI() {
 
 export async function generateConspect(topic: string, size: NoteSize, language: string = 'ru', useSearch: boolean = false) {
   const ai = getAI();
-  if (!ai) throw new Error("AI is not configured. Check your API key.");
+  if (!ai) throw new Error("API_KEY_MISSING");
 
-  const model = "gemini-3-flash-preview";
+  const model = "gemini-1.5-flash";
   const langName = language === 'ru' ? 'Русский' : language === 'en' ? 'English' : language === 'fr' ? 'Français' : '中文';
   
   const sizeDesc = {
@@ -66,9 +66,9 @@ export async function generateConspect(topic: string, size: NoteSize, language: 
 
 export async function rephraseSelection(text: string, instruction: string) {
   const ai = getAI();
-  if (!ai) throw new Error("AI is not configured. Check your API key.");
+  if (!ai) throw new Error("API_KEY_MISSING");
 
-  const model = "gemini-3-flash-preview";
+  const model = "gemini-1.5-flash";
   const prompt = `Перефразируй или измени следующий текст согласно инструкции.
   Инструкция: ${instruction}
   Текст: "${text}"
@@ -88,9 +88,9 @@ export async function rephraseSelection(text: string, instruction: string) {
 
 export async function checkPlagiarism(content: string) {
   const ai = getAI();
-  if (!ai) throw new Error("AI is not configured. Check your API key.");
+  if (!ai) throw new Error("API_KEY_MISSING");
 
-  const model = "gemini-3-flash-preview";
+  const model = "gemini-1.5-flash";
   const prompt = `Проверь следующий текст на уникальность и антиплагиат. 
   Оцени уровень оригинальности в процентах (0-100) и дай краткий комментарий, если текст кажется заимствованным.
   Текст: "${content.substring(0, 5000)}" 
