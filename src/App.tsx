@@ -101,10 +101,13 @@ export default function App() {
           const content = await generateConspect(topic, NoteSize.MEDIUM, language, useSearch);
           if (content) {
             await updateNote(noteId, { content, title: topic });
+          } else {
+            throw new Error("Empty content received from AI");
           }
         }
       } catch (error) {
-        console.error(error);
+        console.error("Quick generation failed:", error);
+        alert("Ошибка быстрой генерации! Проверьте API ключ.");
       } finally {
         setIsQuickGenerating(false);
       }
@@ -156,19 +159,22 @@ export default function App() {
     if (!genTopic || !user) return;
     
     setIsGenerating(true);
+    let noteId: string | null = null;
     try {
-      const noteId = await createNote(user.uid, genTopic, genSize);
+      noteId = await createNote(user.uid, genTopic, genSize);
       if (noteId) {
-        // Pass language and search option to AI
+        setActiveNoteId(noteId); // Switch immediately so user sees something is happening
         const content = await generateConspect(genTopic, genSize, language, useSearch);
         if (content) {
           await updateNote(noteId, { content, title: genTopic });
+        } else {
+          throw new Error("Empty content received from AI");
         }
-        setActiveNoteId(noteId);
         setGenTopic('');
       }
     } catch (error) {
-      console.error(error);
+      console.error("Generation failed:", error);
+      alert("Ошибка при генерации! Проверьте настройки API ключа.");
     } finally {
       setIsGenerating(false);
     }
