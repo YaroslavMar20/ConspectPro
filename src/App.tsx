@@ -113,10 +113,13 @@ export default function App() {
         }
       } catch (error: any) {
         console.error("Quick generation failed:", error);
-        if (error.message === "API_KEY_MISSING") {
-          alert("API ключ не найден! Добавьте GEMINI_API_KEY.");
+        const errorMsg = error.message || "";
+        if (errorMsg === "API_KEY_MISSING") {
+          alert("API ключ не найден!");
+        } else if (errorMsg.includes("429") || errorMsg.includes("RESOURCE_EXHAUSTED")) {
+          alert("Квота Gemini исчерпана. Подождите минуту или попробуйте завтра.");
         } else {
-          alert(`Ошибка быстрой генерации: ${error.message}`);
+          alert(`Ошибка быстрой генерации: ${errorMsg}`);
         }
       } finally {
         setIsQuickGenerating(false);
@@ -191,10 +194,13 @@ export default function App() {
       }
     } catch (error: any) {
       console.error("Generation failed:", error);
-      if (error.message === "API_KEY_MISSING") {
-        alert("API ключ не найден! Если вы на Vercel, добавьте GEMINI_API_KEY в настройки Environment Variables.");
+      const errorMsg = error.message || "";
+      if (errorMsg === "API_KEY_MISSING") {
+        alert("API ключ не найден! Проверьте настройки окружения.");
+      } else if (errorMsg.includes("429") || errorMsg.includes("RESOURCE_EXHAUSTED")) {
+        alert("Превышена квота запросов! Пожалуйста, подождите 1 минуту или попробуйте завтра (на бесплатном тарифе Gemini есть ограничения).");
       } else {
-        alert(`Ошибка при генерации: ${error.message || 'Неизвестная ошибка'}`);
+        alert(`Ошибка при генерации: ${errorMsg || 'Неизвестная ошибка'}`);
       }
     } finally {
       setIsGenerating(false);
