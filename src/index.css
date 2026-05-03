@@ -61,10 +61,16 @@ body {
 }
 
 .ql-editor {
-  padding: 40px !important;
+  padding: 40px 20px !important;
   line-height: 1.6 !important;
   max-width: 800px;
   margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+  .ql-editor {
+    padding: 40px !important;
+  }
 }
 
 .ql-editor h1 {

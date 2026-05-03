@@ -49,7 +49,19 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [notes, setNotes] = useState<Note[]>([]);
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth <= 768) {
+        setIsSidebarOpen(false);
+      } else {
+        setIsSidebarOpen(true);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   const [searchTerm, setSearchTerm] = useState('');
   const [quickGenText, setQuickGenText] = useState('');
   const [isQuickGenerating, setIsQuickGenerating] = useState(false);
@@ -279,177 +291,187 @@ export default function App() {
   }
 
   return (
-    <div className="h-screen flex bg-[#0A0A0A] text-[#E5E5E5] font-sans overflow-hidden">
+    <div className="h-screen flex bg-[#0A0A0A] text-[#E5E5E5] font-sans overflow-hidden relative">
+      {/* Mobile Sidebar Overlay */}
+      <AnimatePresence>
+        {isSidebarOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsSidebarOpen(false)}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
+          />
+        )}
+      </AnimatePresence>
+
       {/* Sidebar */}
       <motion.aside 
         initial={false}
-        animate={{ width: isSidebarOpen ? 260 : 0 }}
+        animate={{ 
+          width: isSidebarOpen ? 260 : 0,
+          x: isSidebarOpen ? 0 : -260
+        }}
+        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
         className={cn(
-          "bg-[#0F0F0F] border-r border-white/5 h-full flex flex-col relative overflow-hidden",
-          !isSidebarOpen && "border-none pt-20"
+          "bg-[#0F0F0F] border-r border-white/5 h-full flex flex-col fixed md:relative z-50 overflow-hidden shadow-2xl md:shadow-none",
+          !isSidebarOpen && "border-none"
         )}
       >
-        {isSidebarOpen && (
-          <>
-            {/* User Profile */}
-            <div className="p-4 border-b border-white/5 flex items-center justify-between bg-[#141414]">
-              {/* ... user profile unchanged ... */}
-              <div className="flex items-center gap-3">
-                <img src={user.photoURL || ''} className="w-8 h-8 rounded-full border border-white/10" alt="" />
-                <div className="flex flex-col">
-                  <span className="font-bold text-xs truncate max-w-[120px]">{user.displayName}</span>
-                  <span className="text-[10px] text-white/40">{t.proMember}</span>
-                </div>
-              </div>
-              <div className="flex items-center gap-1">
-                <button 
-                  onClick={goHome}
-                  className="p-1.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-white shadow-lg shadow-blue-900/20 transition-all flex items-center justify-center"
-                  title={t.home}
-                >
-                  <Home className="w-4 h-4" />
-                </button>
-                <div className="relative">
-                  <button 
-                    onClick={() => setShowLangMenu(!showLangMenu)}
-                    className="p-1.5 hover:bg-white/5 rounded text-white/40 hover:text-white transition-colors"
-                    title={t.selectLanguage}
-                  >
-                    <Globe className="w-4 h-4" />
-                  </button>
-                  <AnimatePresence>
-                    {showLangMenu && (
-                      <motion.div 
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 10 }}
-                        className="absolute right-0 top-full mt-2 w-32 bg-[#1A1A1A] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden"
-                      >
-                        {(['ru', 'en', 'fr', 'zh'] as Language[]).map(lang => (
-                          <button
-                            key={lang}
-                            onClick={() => {
-                              setLanguage(lang);
-                              setShowLangMenu(false);
-                            }}
-                            className={cn(
-                              "w-full px-4 py-2 text-left text-xs font-bold transition-colors",
-                              language === lang ? "bg-blue-600 text-white" : "text-white/60 hover:bg-white/5"
-                            )}
-                          >
-                            {lang.toUpperCase()}
-                          </button>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-                <button 
-                  onClick={() => auth.signOut()}
-                  className="p-1.5 hover:bg-white/5 rounded text-white/40 hover:text-red-400 transition-colors"
-                  title={t.logout}
-                >
-                  <LogOut className="w-4 h-4" />
-                </button>
+        <div className="w-[260px] flex flex-col h-full">
+          {/* User Profile */}
+          <div className="p-4 border-b border-white/5 flex items-center justify-between bg-[#141414]">
+            <div className="flex items-center gap-3">
+              <img src={user.photoURL || ''} className="w-8 h-8 rounded-full border border-white/10" alt="" />
+              <div className="flex flex-col">
+                <span className="font-bold text-xs truncate max-w-[120px]">{user.displayName}</span>
+                <span className="text-[10px] text-white/40">{t.proMember}</span>
               </div>
             </div>
-
-            {/* Navigation / Actions */}
-            <div className="p-4 flex flex-col gap-4">
+            <div className="flex items-center gap-1">
               <button 
-                onClick={handleCreateEmpty}
-                className="w-full flex items-center justify-between py-2.5 px-3 bg-white/5 border border-white/10 text-white rounded-lg text-sm hover:bg-white/10 transition-all group"
+                onClick={goHome}
+                className="p-1.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-white shadow-lg shadow-blue-900/20 transition-all flex items-center justify-center shrink-0"
+                title={t.home}
               >
-                <div className="flex items-center gap-2">
-                  <Plus className="w-4 h-4 text-blue-400" />
-                  <span>{t.newNote}...</span>
-                </div>
-                <span className="text-[10px] text-white/30 border border-white/10 px-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">⌘N</span>
+                <Home className="w-4 h-4" />
               </button>
-
-              {/* Quick Generate Input */}
-              <div className="relative group">
-                <Sparkles className={cn(
-                  "w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 transition-colors",
-                  isQuickGenerating ? "text-blue-400 animate-pulse" : "text-white/20 group-focus-within:text-blue-400"
-                )} />
-                <input 
-                  type="text" 
-                  value={quickGenText}
-                  onChange={(e) => setQuickGenText(e.target.value)}
-                  onKeyDown={handleQuickGenerate}
-                  disabled={isQuickGenerating || !isVerified}
-                  placeholder={!isVerified ? t.verifyHuman : (isQuickGenerating ? t.generatingBtn : t.quickGenPlaceholder)}
-                  className="w-full pl-9 pr-4 py-3 bg-[#1A1A1A] border-none rounded-xl text-xs text-white placeholder:text-white/20 focus:ring-1 focus:ring-blue-500/50 shadow-inner"
-                />
-                {!isQuickGenerating && quickGenText && isVerified && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 bg-blue-500/20 rounded text-[8px] font-bold text-blue-400 border border-blue-500/20">ENTER</div>
-                )}
-              </div>
-              
               <div className="relative">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
-                <input 
-                  type="text" 
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder={t.searchNotes}
-                  className="w-full pl-9 pr-4 py-2 bg-[#1A1A1A] border-none rounded-lg text-xs text-white placeholder:text-white/20 focus:ring-1 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-
-            {/* Notes List */}
-            <div className="flex-1 overflow-y-auto px-2 space-y-0.5 pb-4 custom-scrollbar">
-              <h3 className="px-3 py-2 text-[10px] font-bold text-white/20 uppercase tracking-widest mt-2">{t.library}</h3>
-              {filteredNotes.map(note => (
-                <button
-                  key={note.id}
-                  onClick={() => setActiveNoteId(note.id)}
-                  className={cn(
-                    "w-full flex flex-col items-start px-3 py-3 rounded-md transition-all text-left group border-l-2 border-transparent",
-                    activeNoteId === note.id 
-                      ? "bg-blue-600/10 border-blue-500 shadow-[inset_0_0_20px_rgba(59,130,246,0.05)]" 
-                      : "hover:bg-white/5"
-                  )}
+                <button 
+                  onClick={() => setShowLangMenu(!showLangMenu)}
+                  className="p-1.5 hover:bg-white/5 rounded text-white/40 hover:text-white transition-colors"
+                  title={t.selectLanguage}
                 >
-                  <div className="flex items-center justify-between w-full mb-1">
-                    <span className={cn(
-                      "font-medium truncate text-sm",
-                      activeNoteId === note.id ? "text-white" : "text-white/70"
-                    )}>
-                      {note.title || t.untitled}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-white/30 font-medium">
-                      {note.updatedAt?.toDate().toLocaleDateString() || t.recently}
-                    </span>
-                    {note.collaboratorEmails?.length > 0 && (
-                      <Share2 className="w-3 h-3 text-blue-400 opacity-60" />
-                    )}
-                  </div>
+                  <Globe className="w-4 h-4" />
                 </button>
-              ))}
-              {filteredNotes.length === 0 && (
-                <div className="p-8 text-center bg-[#141414]/50 rounded-xl mt-4 mx-2">
-                  <Library className="w-8 h-8 text-white/10 mx-auto mb-2" />
-                  <p className="text-[10px] text-white/30 font-medium uppercase tracking-wider">{t.emptyLibrary}</p>
-                </div>
-              )}
-            </div>
-            {/* Bottom Actions */}
-            <div className="p-4 border-t border-white/5 space-y-2">
+                <AnimatePresence>
+                  {showLangMenu && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      className="absolute right-0 top-full mt-2 w-32 bg-[#1A1A1A] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden"
+                    >
+                      {(['ru', 'en', 'fr', 'zh'] as Language[]).map(lang => (
+                        <button
+                          key={lang}
+                          onClick={() => {
+                            setLanguage(lang);
+                            setShowLangMenu(false);
+                          }}
+                          className={cn(
+                            "w-full px-4 py-2 text-left text-xs font-bold transition-colors",
+                            language === lang ? "bg-blue-600 text-white" : "text-white/60 hover:bg-white/5"
+                          )}
+                        >
+                          {lang.toUpperCase()}
+                        </button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
               <button 
                 onClick={() => auth.signOut()}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-bold text-white/40 hover:text-white hover:bg-white/5 transition-all group"
+                className="p-1.5 hover:bg-white/5 rounded text-white/40 hover:text-red-400 transition-colors"
+                title={t.logout}
               >
-                <LogOut className="w-4 h-4 group-hover:text-red-400 transition-colors" />
-                <span>{t.logout}</span>
+                <LogOut className="w-4 h-4" />
               </button>
             </div>
-          </>
-        )}
+          </div>
+
+          {/* Navigation / Actions */}
+          <div className="p-4 flex flex-col gap-4">
+            <button 
+              onClick={() => {
+                handleCreateEmpty();
+                if (window.innerWidth < 768) setIsSidebarOpen(false);
+              }}
+              className="w-full flex items-center justify-between py-2.5 px-3 bg-white/5 border border-white/10 text-white rounded-lg text-sm hover:bg-white/10 transition-all group"
+            >
+              <div className="flex items-center gap-2">
+                <Plus className="w-4 h-4 text-blue-400" />
+                <span>{t.newNote}...</span>
+              </div>
+              <span className="text-[10px] text-white/30 border border-white/10 px-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">⌘N</span>
+            </button>
+
+            {/* Quick Generate Input */}
+            <div className="relative group">
+              <Sparkles className={cn(
+                "w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 transition-colors",
+                isQuickGenerating ? "text-blue-400 animate-pulse" : "text-white/20 group-focus-within:text-blue-400"
+              )} />
+              <input 
+                type="text" 
+                value={quickGenText}
+                onChange={(e) => setQuickGenText(e.target.value)}
+                onKeyDown={(e) => {
+                  handleQuickGenerate(e);
+                  if (e.key === 'Enter' && window.innerWidth < 768) setIsSidebarOpen(false);
+                }}
+                disabled={isQuickGenerating || !isVerified}
+                placeholder={!isVerified ? t.verifyHuman : (isQuickGenerating ? t.generatingBtn : t.quickGenPlaceholder)}
+                className="w-full pl-9 pr-4 py-3 bg-[#1A1A1A] border-none rounded-xl text-xs text-white placeholder:text-white/20 focus:ring-1 focus:ring-blue-500/50 shadow-inner"
+              />
+              {!isQuickGenerating && quickGenText && isVerified && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 bg-blue-500/20 rounded text-[8px] font-bold text-blue-400 border border-blue-500/20">ENTER</div>
+              )}
+            </div>
+            
+            <div className="relative">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
+              <input 
+                type="text" 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder={t.searchNotes}
+                className="w-full pl-9 pr-4 py-2 bg-[#1A1A1A] border-none rounded-lg text-xs text-white placeholder:text-white/20 focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
+          {/* Notes List */}
+          <div className="flex-1 overflow-y-auto px-2 space-y-0.5 pb-4 custom-scrollbar">
+            <h3 className="px-3 py-2 text-[10px] font-bold text-white/20 uppercase tracking-widest mt-2">{t.library}</h3>
+            {filteredNotes.map(note => (
+              <button
+                key={note.id}
+                onClick={() => {
+                  setActiveNoteId(note.id);
+                  if (window.innerWidth < 768) setIsSidebarOpen(false);
+                }}
+                className={cn(
+                  "w-full flex flex-col items-start px-3 py-3 rounded-md transition-all text-left group border-l-2 border-transparent",
+                  activeNoteId === note.id 
+                    ? "bg-blue-600/10 border-blue-500 shadow-[inset_0_0_20px_rgba(59,130,246,0.05)]" 
+                    : "hover:bg-white/5"
+                )}
+              >
+                <div className="flex items-center justify-between w-full mb-1">
+                  <span className={cn(
+                    "font-medium truncate text-sm",
+                    activeNoteId === note.id ? "text-white" : "text-white/70"
+                  )}>
+                    {note.title || t.untitled}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-white/30 font-medium">
+                    {note.updatedAt?.toDate().toLocaleDateString() || t.recently}
+                  </span>
+                </div>
+              </button>
+            ))}
+            {filteredNotes.length === 0 && (
+              <div className="p-8 text-center bg-[#141414]/50 rounded-xl mt-4 mx-2">
+                <Library className="w-8 h-8 text-white/10 mx-auto mb-2" />
+                <p className="text-[10px] text-white/30 font-medium uppercase tracking-wider">{t.emptyLibrary}</p>
+              </div>
+            )}
+          </div>
+        </div>
       </motion.aside>
 
       {/* Main Content */}
@@ -457,7 +479,7 @@ export default function App() {
         {/* Toggle Sidebar Button */}
         <button 
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="absolute left-6 top-6 z-20 p-2 bg-[#0F0F0F] border border-white/10 rounded-lg shadow-xl hover:bg-[#1A1A1A] transition-colors"
+          className="absolute left-4 top-4 md:left-6 md:top-6 z-20 p-2 bg-[#0F0F0F] border border-white/10 rounded-lg shadow-xl hover:bg-[#1A1A1A] transition-colors"
         >
           <LayoutDashboard className="w-4 h-4 text-white/60" />
         </button>
@@ -469,9 +491,9 @@ export default function App() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.98 }}
-              className="flex-1 h-full p-8 pt-20 flex flex-col bg-[#0A0A0A]"
+              className="flex-1 h-full w-full pt-16 md:pt-20 flex flex-col bg-[#0A0A0A] overflow-y-auto"
             >
-              <div className="max-w-4xl mx-auto w-full h-full flex flex-col shadow-2xl shadow-black/50">
+              <div className="max-w-4xl mx-auto w-full flex-1 flex flex-col md:shadow-2xl md:shadow-black/50">
                 <Editor 
                   note={activeNote!} 
                   onDelete={() => {
@@ -488,25 +510,25 @@ export default function App() {
               key="empty-state"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="flex-1 flex items-center justify-center p-8 bg-[#0A0A0A]"
+              className="flex-1 flex items-center justify-center p-4 md:p-8 bg-[#0A0A0A] overflow-y-auto"
             >
-              <div className="max-w-2xl w-full text-center">
-                <div className="mb-8 inline-block p-4 bg-blue-600/10 rounded-2xl border border-blue-500/20 text-blue-400">
-                  <Sparkles className="w-10 h-10" />
+              <div className="max-w-2xl w-full text-center py-10">
+                <div className="mb-6 md:mb-8 inline-block p-4 bg-blue-600/10 rounded-2xl border border-blue-500/20 text-blue-400">
+                  <Sparkles className="w-8 h-8 md:w-10 md:h-10" />
                 </div>
-                <h2 className="text-4xl font-bold text-white mb-4 tracking-tight">
+                <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 tracking-tight px-4 capitalize">
                   {t.generatePrompt}
                 </h2>
-                <p className="text-white/40 mb-12 text-lg">
+                <p className="text-white/40 mb-8 md:mb-12 text-base md:text-lg px-4">
                   {t.generateSub}
                 </p>
 
-                <div className="bg-[#0F0F0F] p-8 rounded-3xl border border-white/10 text-left shadow-2xl relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                    <BookOpen className="w-32 h-32" />
+                <div className="bg-[#0F0F0F] p-5 md:p-8 rounded-3xl border border-white/10 text-left shadow-2xl relative overflow-hidden group mx-4">
+                  <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+                    <BookOpen className="w-24 h-24 md:w-32 md:h-32" />
                   </div>
                   
-                  <div className="space-y-8 relative z-10">
+                  <div className="space-y-6 md:space-y-8 relative z-10">
                     <div>
                       <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest block mb-3">{t.topicLabel}</label>
                       <input 
@@ -514,11 +536,11 @@ export default function App() {
                         value={genTopic}
                         onChange={(e) => setGenTopic(e.target.value)}
                         placeholder={t.topicPlaceholder}
-                        className="w-full px-5 py-4 bg-[#141414] border border-white/5 rounded-2xl focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all text-lg text-white"
+                        className="w-full px-4 py-3 md:px-5 md:py-4 bg-[#141414] border border-white/5 rounded-2xl focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all text-base md:text-lg text-white"
                       />
                     </div>
 
-                    <div className="flex flex-col md:flex-row gap-8">
+                    <div className="flex flex-col sm:flex-row gap-6 md:gap-8">
                       <div className="flex-1">
                         <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest block mb-3">{t.lengthLabel}</label>
                         <div className="flex gap-2">
@@ -527,7 +549,7 @@ export default function App() {
                               key={size}
                               onClick={() => setGenSize(size)}
                               className={cn(
-                                "flex-1 py-3 px-2 rounded-xl text-[11px] font-bold border transition-all capitalize",
+                                "flex-1 py-3 px-1 rounded-xl text-[10px] md:text-[11px] font-bold border transition-all capitalize",
                                 genSize === size 
                                   ? "bg-blue-600 border-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.5)]" 
                                   : "bg-[#141414] border-white/5 text-white/40 hover:border-white/10 hover:text-white/60"
@@ -544,7 +566,7 @@ export default function App() {
                         <button
                           onClick={() => setUseSearch(!useSearch)}
                           className={cn(
-                            "w-full py-3 px-4 rounded-xl text-[11px] font-bold border transition-all flex items-center justify-center gap-2",
+                            "w-full py-3 px-4 rounded-xl text-[10px] md:text-[11px] font-bold border transition-all flex items-center justify-center gap-2",
                             useSearch
                               ? "bg-emerald-600 border-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.3)]"
                               : "bg-[#141414] border-white/5 text-white/40 hover:border-white/10 hover:text-white/60"
@@ -565,7 +587,7 @@ export default function App() {
                           exit={{ height: 0, opacity: 0 }}
                           className="overflow-hidden"
                         >
-                          <div className="flex flex-col gap-4 p-4 bg-[#141414] border border-white/5 rounded-2xl mb-4 transition-all">
+                          <div className="flex flex-col gap-4 p-4 bg-[#141414] border border-white/5 rounded-2xl transition-all">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
                                 <ShieldCheck className={cn("w-5 h-5", isVerifying ? "text-blue-400" : "text-white/20")} />
@@ -574,7 +596,7 @@ export default function App() {
                               {!isVerifying && (
                                 <button
                                   onClick={handleVerify}
-                                  className="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-white/5 text-white/40 hover:bg-white/10 border border-white/5 transition-all"
+                                  className="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-white/5 text-white/40 hover:bg-white/10 border border-white/5 transition-all focus:ring-1 focus:ring-blue-500"
                                 >
                                   Verify
                                 </button>
@@ -617,7 +639,7 @@ export default function App() {
                     <button 
                       onClick={handleGenerate}
                       disabled={isGenerating || !genTopic || !isVerified}
-                      className="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold text-lg hover:bg-blue-700 transition-all flex items-center justify-center gap-4 disabled:opacity-50 shadow-xl shadow-blue-900/20"
+                      className="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold text-base md:text-lg hover:bg-blue-700 transition-all flex items-center justify-center gap-4 disabled:opacity-50 shadow-xl shadow-blue-900/20 active:scale-[0.98]"
                     >
                       {isGenerating ? (
                         <>
@@ -631,22 +653,6 @@ export default function App() {
                         </>
                       )}
                     </button>
-                  </div>
-                </div>
-
-                {/* Quick Shortcuts */}
-                <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="p-5 bg-[#0F0F0F] rounded-2xl border border-white/5 hover:border-white/10 transition-colors group">
-                    <History className="w-5 h-5 text-indigo-400 mb-3 mx-auto group-hover:scale-110 transition-transform" />
-                    <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">{t.versionHistory}</span>
-                  </div>
-                  <div className="p-5 bg-[#0F0F0F] rounded-2xl border border-white/5 hover:border-white/10 transition-colors group">
-                    <Search className="w-5 h-5 text-emerald-400 mb-3 mx-auto group-hover:scale-110 transition-transform" />
-                    <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">{t.globalSearch}</span>
-                  </div>
-                  <div className="p-5 bg-[#0F0F0F] rounded-2xl border border-white/5 hover:border-white/10 transition-colors group">
-                    <FileText className="w-5 h-5 text-orange-400 mb-3 mx-auto group-hover:scale-110 transition-transform" />
-                    <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">{t.wordIntegration}</span>
                   </div>
                 </div>
               </div>
