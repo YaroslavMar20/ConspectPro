@@ -1,9 +1,24 @@
 import { GoogleGenAI } from "@google/genai";
 import { NoteSize } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+let aiInstance: GoogleGenAI | null = null;
+
+function getAI() {
+  if (!aiInstance) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      console.warn("GEMINI_API_KEY is not defined. AI features will be disabled.");
+      return null;
+    }
+    aiInstance = new GoogleGenAI({ apiKey });
+  }
+  return aiInstance;
+}
 
 export async function generateConspect(topic: string, size: NoteSize, language: string = 'ru', useSearch: boolean = false) {
+  const ai = getAI();
+  if (!ai) throw new Error("AI is not configured. Check your API key.");
+
   const model = "gemini-3-flash-preview";
   const langName = language === 'ru' ? 'Русский' : language === 'en' ? 'English' : language === 'fr' ? 'Français' : '中文';
   
@@ -41,6 +56,9 @@ export async function generateConspect(topic: string, size: NoteSize, language: 
 }
 
 export async function rephraseSelection(text: string, instruction: string) {
+  const ai = getAI();
+  if (!ai) throw new Error("AI is not configured. Check your API key.");
+
   const model = "gemini-3-flash-preview";
   const prompt = `Перефразируй или измени следующий текст согласно инструкции.
   Инструкция: ${instruction}
@@ -60,6 +78,9 @@ export async function rephraseSelection(text: string, instruction: string) {
 }
 
 export async function checkPlagiarism(content: string) {
+  const ai = getAI();
+  if (!ai) throw new Error("AI is not configured. Check your API key.");
+
   const model = "gemini-3-flash-preview";
   const prompt = `Проверь следующий текст на уникальность и антиплагиат. 
   Оцени уровень оригинальности в процентах (0-100) и дай краткий комментарий, если текст кажется заимствованным.
