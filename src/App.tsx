@@ -258,7 +258,7 @@ export default function App() {
               <div className="flex items-center gap-1">
                 <button 
                   onClick={goHome}
-                  className="p-1.5 hover:bg-blue-600/20 rounded text-blue-400 transition-colors"
+                  className="p-1.5 bg-blue-600 hover:bg-blue-700 rounded-lg text-white shadow-lg shadow-blue-900/20 transition-all flex items-center justify-center"
                   title={t.home}
                 >
                   <Home className="w-4 h-4" />

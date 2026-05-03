@@ -43,11 +43,16 @@ export async function generateConspect(topic: string, size: NoteSize, language: 
   try {
     const response = await ai.models.generateContent({
       model,
-      contents: prompt,
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
       config: {
         tools: useSearch ? [{ googleSearch: {} }] : undefined
       }
     });
+    
+    if (!response.text) {
+      throw new Error("No text returned from Gemini");
+    }
+    
     return response.text;
   } catch (error) {
     console.error("Gemini generation error:", error);
@@ -68,9 +73,9 @@ export async function rephraseSelection(text: string, instruction: string) {
   try {
     const response = await ai.models.generateContent({
       model,
-      contents: prompt,
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
     });
-    return response.text;
+    return response.text || "";
   } catch (error) {
     console.error("Gemini rephrase error:", error);
     throw error;
@@ -90,7 +95,7 @@ export async function checkPlagiarism(content: string) {
   try {
     const response = await ai.models.generateContent({
       model,
-      contents: prompt,
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
       config: {
         responseMimeType: "application/json"
       }
