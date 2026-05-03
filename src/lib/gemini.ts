@@ -1,0 +1,82 @@
+import { GoogleGenAI } from "@google/genai";
+import { NoteSize } from "../types";
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+export async function generateConspect(topic: string, size: NoteSize, language: string = 'ru', useSearch: boolean = false) {
+  const model = "gemini-3-flash-preview";
+  const langName = language === 'ru' ? 'Русский' : language === 'en' ? 'English' : language === 'fr' ? 'Français' : '中文';
+  
+  const sizeDesc = {
+    [NoteSize.SHORT]: "Краткий обзор (около 500 слов), только основные тезисы.",
+    [NoteSize.MEDIUM]: "Средний объем (около 1500 слов), подробное раскрытие ключевых моментов.",
+    [NoteSize.LONG]: "Развернутая работа (от 3000 слов), глубокий анализ, примеры, подпункты и выводы."
+  }[size];
+
+  const prompt = `Ты — профессиональный академический помощник. Твоя задача — составить качественную учебную работу (конспект/реферат) на тему: "${topic}".
+  
+  Требования к работе:
+  1. Язык: ${langName}.
+  2. Объем/Глубина: ${sizeDesc}.
+  3. Структура: Используй четкую иерархию. Обязательно начни с введения, затем разделы с подзаголовками, и закончи заключением или резюме.
+  4. Форматирование: Используй СТРОГО только HTML-тэги (<h1>, <h2>, <h3>, <p>, <ul>, <li>, <strong>, <em>, <blockquote>). НЕ используй Markdown (например, ## или **).
+  5. Стиль: Академический, объективный, профессиональный, но понятный.
+  ${useSearch ? '6. Использование данных: Используй Google Поиск для получения самой свежей и актуальной информации по теме.' : ''}
+  
+  Важно: Текст должен выглядеть как готовая завершенная работа, которую можно сразу использовать для учебы.`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model,
+      contents: prompt,
+      config: {
+        tools: useSearch ? [{ googleSearch: {} }] : undefined
+      }
+    });
+    return response.text;
+  } catch (error) {
+    console.error("Gemini generation error:", error);
+    throw error;
+  }
+}
+
+export async function rephraseSelection(text: string, instruction: string) {
+  const model = "gemini-3-flash-preview";
+  const prompt = `Перефразируй или измени следующий текст согласно инструкции.
+  Инструкция: ${instruction}
+  Текст: "${text}"
+  Верни только измененный текст без комментариев.`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model,
+      contents: prompt,
+    });
+    return response.text;
+  } catch (error) {
+    console.error("Gemini rephrase error:", error);
+    throw error;
+  }
+}
+
+export async function checkPlagiarism(content: string) {
+  const model = "gemini-3-flash-preview";
+  const prompt = `Проверь следующий текст на уникальность и антиплагиат. 
+  Оцени уровень оригинальности в процентах (0-100) и дай краткий комментарий, если текст кажется заимствованным.
+  Текст: "${content.substring(0, 5000)}" 
+  Верни JSON с полями: score (number), feedback (string).`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model,
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json"
+      }
+    });
+    return JSON.parse(response.text || "{}");
+  } catch (error) {
+    console.error("Gemini plagiarism check error:", error);
+    throw error;
+  }
+}

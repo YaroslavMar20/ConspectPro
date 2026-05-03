@@ -1,0 +1,92 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,900;1,900&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-serif: "Playfair Display", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  
+  --color-dark-bg: #0A0A0A;
+  --color-component-bg: #0F0F0F;
+  --color-border-white: rgba(255, 255, 255, 0.1);
+}
+
+body {
+  @apply font-sans bg-[#0A0A0A] text-[#E5E5E5];
+}
+
+.glass {
+  background: rgba(20, 20, 20, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 10px;
+}
+
+/* Custom Quill styles for Dark Theme */
+.ql-container.ql-snow {
+  border: none !important;
+  font-family: inherit !important;
+  font-size: 1.125rem !important;
+  color: #E5E5E5 !important;
+}
+
+.ql-toolbar.ql-snow {
+  border: none !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+  background: #0F0F0F;
+}
+
+.ql-toolbar.ql-snow .ql-stroke {
+  stroke: #A3A3A3 !important;
+}
+
+.ql-toolbar.ql-snow .ql-fill {
+  fill: #A3A3A3 !important;
+}
+
+.ql-toolbar.ql-snow .ql-picker {
+  color: #A3A3A3 !important;
+}
+
+.ql-editor {
+  padding: 40px !important;
+  line-height: 1.6 !important;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.ql-editor h1 {
+  @apply text-4xl font-bold mb-6 mt-8 text-white border-b border-white/10 pb-4 tracking-tight;
+}
+
+.ql-editor h2 {
+  @apply text-2xl font-semibold mb-4 mt-6 text-white/90;
+}
+
+.ql-editor p {
+  @apply mb-4 text-white/80 leading-relaxed;
+}
+
+.ql-editor ul, .ql-editor ol {
+  @apply mb-4 pl-6 text-white/80;
+}
+
+.ql-editor li {
+  @apply mb-2;
+}
+
+.ql-editor strong {
+  @apply font-bold text-white;
+}

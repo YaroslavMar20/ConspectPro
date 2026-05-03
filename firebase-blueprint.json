@@ -1,0 +1,45 @@
+{
+  "entities": {
+    "Note": {
+      "title": "Collaborative Note",
+      "description": "A document containing lecture notes or coursework.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "The title of the note." },
+        "content": { "type": "string", "description": "The HTML content of the note." },
+        "ownerId": { "type": "string", "description": "The UID of the user who created the note." },
+        "collaboratorEmails": { 
+          "type": "array", 
+          "items": { "type": "string" },
+          "description": "List of emails allowed to collaborate on this note." 
+        },
+        "topic": { "type": "string", "description": "The target topic for AI generation." },
+        "targetSize": { "type": "string", "description": "The target size (e.g., 'short', 'medium', 'long')." },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "content", "ownerId", "createdAt", "updatedAt"]
+    },
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Public profile information for a user.",
+      "type": "object",
+      "properties": {
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "photoURL": { "type": "string" }
+      },
+      "required": ["displayName", "email"]
+    }
+  },
+  "firestore": {
+    "notes": {
+      "schema": "Note",
+      "description": "Collection of notes."
+    },
+    "users": {
+        "schema": "UserProfile",
+        "description": "User profiles for mapping UIDs to display names/emails."
+    }
+  }
+}

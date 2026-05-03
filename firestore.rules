@@ -1,0 +1,64 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isValidId(id) {
+      return id is string && id.size() <= 128;
+    }
+    function incoming() {
+      return request.resource.data;
+    }
+    function existing() {
+      return resource.data;
+    }
+    function isOwner(data) {
+      return data.get('ownerId', '') == request.auth.uid;
+    }
+    function isCollaborator(data) {
+      return request.auth.token.get('email', '') in data.get('collaboratorEmails', []);
+    }
+
+    function isValidNote(data) {
+      return data.get('title', '') is string && data.get('title', '').size() <= 500 &&
+             data.get('content', '') is string && data.get('content', '').size() <= 1000000 &&
+             data.get('ownerId', '') is string && data.get('ownerId', '').size() <= 128 &&
+             data.get('createdAt', request.time) is timestamp &&
+             data.get('updatedAt', request.time) is timestamp;
+    }
+
+    match /test/connection {
+      allow get: if true;
+    }
+
+    match /notes/{noteId} {
+      allow get: if isSignedIn() && (isOwner(existing()) || isCollaborator(existing()));
+      allow list: if isSignedIn() && (isOwner(existing()) || isCollaborator(existing()));
+      
+      allow create: if isSignedIn() && isValidId(noteId) && 
+                    isValidNote(incoming()) && 
+                    isOwner(incoming()) &&
+                    incoming().get('createdAt', request.time) == request.time &&
+                    incoming().get('updatedAt', request.time) == request.time;
+      
+      allow update: if isSignedIn() && (isOwner(existing()) || isCollaborator(existing())) &&
+                    isValidNote(incoming()) &&
+                    incoming().ownerId == existing().ownerId &&
+                    incoming().createdAt == existing().createdAt &&
+                    incoming().updatedAt == request.time;
+
+      allow delete: if isSignedIn() && isOwner(existing());
+    }
+
+    match /users/{userId} {
+      allow get: if isSignedIn();
+      allow create, update: if isSignedIn() && request.auth.uid == userId &&
+                            incoming().email == request.auth.token.email;
+    }
+  }
+}

@@ -1,0 +1,62 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Common Helpers
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+    function incoming() {
+      return request.resource.data;
+    }
+    function existing() {
+      return resource.data;
+    }
+    function isOwner(data) {
+      return data.ownerId == request.auth.uid;
+    }
+    function isCollaborator(data) {
+      return request.auth.token.email in data.collaboratorEmails;
+    }
+
+    // Note Validation
+    function isValidNote(data) {
+      return data.title is string && data.title.size() <= 200 &&
+             data.content is string && data.content.size() <= 500000 &&
+             data.ownerId == request.auth.uid &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp;
+    }
+
+    match /notes/{noteId} {
+      allow get: if isSignedIn() && (isOwner(existing()) || isCollaborator(existing()));
+      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || request.auth.token.email in resource.data.collaboratorEmails);
+      
+      allow create: if isSignedIn() && isValidId(noteId) && isValidNote(incoming()) && 
+                    incoming().createdAt == request.time &&
+                    incoming().updatedAt == request.time;
+      
+      allow update: if isSignedIn() && (isOwner(existing()) || isCollaborator(existing())) &&
+                    isValidNote(incoming()) &&
+                    incoming().ownerId == existing().ownerId &&
+                    incoming().createdAt == existing().createdAt &&
+                    incoming().updatedAt == request.time &&
+                    (isOwner(existing()) || (incoming().collaboratorEmails == existing().collaboratorEmails)); // Only owner can change collaborators
+
+      allow delete: if isSignedIn() && isOwner(existing());
+    }
+
+    match /users/{userId} {
+      allow get: if isSignedIn();
+      allow create, update: if isSignedIn() && request.auth.uid == userId &&
+                            incoming().email == request.auth.token.email;
+    }
+  }
+}
